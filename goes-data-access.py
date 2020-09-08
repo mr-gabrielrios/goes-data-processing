@@ -1,3 +1,5 @@
+
+
 from netCDF4 import Dataset
 import matplotlib
 import matplotlib.pyplot as plt
@@ -8,15 +10,19 @@ import cartopy.feature as cf
 import os
 from datetime import datetime
 import urllib.request
+import sys
 
-def main(*args):
+def main():
+    args = []
+    for arg in sys.argv[1:]:
+        args.append(float(arg))
     gcs_path, local_dir = create_path_dirs()
     print('Path created')
     gcs_data_access(gcs_path, local_dir);
     print('Data accessed')
     lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time = goes_img_nav(local_dir);
     print('Satellite image processed')
-    ncdata = plot_ncdata(lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, *args);
+    ncdata = plot_ncdata(lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, args);
     print('Script finished, data should be plotting.')
     return ncdata
     
@@ -167,13 +173,13 @@ def goes_img_nav(ncdir):
 # Output: plot of GOES data for selected variable
 # NOTE: This method must be run after having saved data to variables after runnnig goes_img_nav()
 
-def plot_ncdata(lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, *args):
-    print(args[:])
+def plot_ncdata(lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, args):
+    
     # To-do: user prompt to specify coordinates to be defined
 
     # 1. Establish viewbox settings
     # 1a. If user provides inputs, use those to define viewbox
-    if len(args) > 0:
+    if args:
         [central_lon, central_lat, bound_sz] = args
         # Create box from user input
         bound_box = [central_lon - bound_sz,
