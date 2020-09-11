@@ -14,7 +14,6 @@ import os
 import os.path
 from netCDF4 import Dataset
 import numpy as np
-import math
 
 ### Data gathering algorithm
 ### Function objective: list all .nc files that satisfy input conditions
@@ -155,6 +154,8 @@ def goes_img_nav(nc_file, *args):
         output_data = np.where((~np.isnan(working_lon_deg) & ~np.isnan(working_lat_deg)), 
                                data, 
                                float('NaN'))
+        # Re-filter data, arbitrary upper limit set at 1000
+        output_data = np.where(data.data < 1000, data, float('NaN'))
             
         return output_data, lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, bound_box
     
@@ -177,7 +178,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
-def plot_ncdata(*args, **kwargs):
+def plot_ncdata(min_val, max_val, *args, **kwargs):
     
     [lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, bound_box] = kwargs.values()
         
@@ -205,7 +206,13 @@ def plot_ncdata(*args, **kwargs):
     # Figure title
     plt.title('%s \n %s' % (dataset_long_name, data_time))
     # Figure colormap
-    im = ax.pcolormesh(lon_deg.data, lat_deg.data, data, transform=proj[0], cmap=plt.get_cmap('jet'))
+    im = ax.pcolormesh(lon_deg.data, 
+                       lat_deg.data, 
+                       data, 
+                       vmin = min_val,
+                       vmax = max_val,
+                       transform=proj[0], 
+                       cmap=plt.get_cmap('jet'))
     # Scales colorbar to height of plot
     cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])    
     cb = plt.colorbar(im, cax=cax)
@@ -216,9 +223,26 @@ def plot_ncdata(*args, **kwargs):
 def main(abi_dp_level, abi_dp_name, start_time, end_time, ncdir, *args):
     file_list = gather_data(abi_dp_level, abi_dp_name, start_time, end_time, ncdir)
     data_list = goes_data_processor(file_list, *args)
+    
+    i = 0
+    for file in data_list: 
+        print(np.nanmin(file[0]), np.nanmax(file[0]))
+        if i == 0:
+            min_val = np.nanmin(file[0])
+            max_val = np.nanmax(file[0])
+        else:
+            if np.nanmin(file[0]) < min_val:
+                min_val = np.nanmin(file[0])
+            elif np.nanmax(file[0]) > max_val:
+                max_val = np.nanmax(file[0])     
+        i += 1
+            
+    print(min_val, max_val)
     for file in data_list:
-        print(file[-1]) # Print timestamps for each file read
-        plot_ncdata(*args,
+        print(file[-2]) # Print timestamps for each file read
+        plot_ncdata(min_val,
+                    max_val, 
+                    *args,
                     lat_deg = file[1],
                     lon_deg = file[2], 
                     data = file[3], 
@@ -226,7 +250,6 @@ def main(abi_dp_level, abi_dp_name, start_time, end_time, ncdir, *args):
                     dataset_long_name = file[5], 
                     data_units = file[6], 
                     data_time = file[7],
-                    bound_box = file[8])
+                    bound_box = file[8],)
     
-# main(2, 'LSTC', 20200010000000, 20201802359599, r'C:\Users\mrgab\Documents\NOAA-CREST\GOES-16 Data', -74, 40.8, 1)
-main(2, 'LSTC', 20200010000000, 20201802359599, r'C:\Users\mrgab\Documents\NOAA-CREST\GOES-16 Data')
+main(2, 'LSTC', 20202500000000, 20202502359599, r'C:\Users\mrgab\Documents\NOAA-CREST\GOES-16 Data\ncdata', -74, 40.8, 1)
