@@ -51,10 +51,6 @@ def gather_data(abi_dp_level, abi_dp_name, start_time, end_time, ncdir):
             
     return file_list
 
-# Test run with start time of 2020-01-01 @ 12:00 AM and end time of 2020-03-01 @ 11:59:59 PM
-# fl = gather_data(1, 2, 20200010000000, 20200702359599, r'C:\Users\mrgab\Documents\NOAA-CREST\GOES-16 Data')
-# print(fl)
-
 ##############################################################################
 
 ### GOES satellite projection and data processing algorithm
@@ -165,6 +161,12 @@ def goes_img_nav(nc_file, *args):
 
 ##############################################################################
 
+### GOES satellite projection and data processing algorithm
+### Function objective: project GOES satellite data onto grid of lat/lon coordinates, provide output data
+# Inputs (and data types)
+# Outputs (and data types):
+# Note: Intended to be iterated over for list of .nc files
+
 def goes_data_processor(file_list, *args):
     data_list = []
     for file in file_list:
@@ -174,56 +176,14 @@ def goes_data_processor(file_list, *args):
             data_units, data_time, bound_box])        
     return data_list
 
-import matplotlib
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+##############################################################################
 
-def plot_ncdata(min_val, max_val, *args, **kwargs):
+### 
+###
+# Inputs (and data types)
+# Outputs (and data types):
     
-    [lat_deg, lon_deg, data, dataset_name, dataset_long_name, data_units, data_time, bound_box] = kwargs.values()
-        
-    if args:
-        [central_lon, central_lat, bound_sz] = args[:]
-    else:
-        central_lon = (bound_box[0] + bound_box[1]) / 2.0
-        central_lat = (bound_box[2] + bound_box[3]) / 2.0   
-        
-    # Convert from degK to degF
-    # dataF = (data - 273.15) * (9 / 5) + 32
-
-    # Create figure and format it
-    fig = plt.figure(figsize=(6, 6), dpi=200)
-    matplotlib.rcParams['font.family'] = ['Arial']
-
-    # Define desired projection. GOES-16 default is PlateCarree. Orthographic is chosen as final projection
-    proj = [ccrs.PlateCarree(), ccrs.Orthographic(central_lon, central_lat)];
-    ax = plt.axes(projection=proj[1])
-    ax.set_extent(bound_box)
-    ax.gridlines()
-    ax.coastlines(resolution='10m')
-
-    ### Figure metadata
-    # Figure title
-    plt.title('%s \n %s' % (dataset_long_name, data_time))
-    # Figure colormap
-    im = ax.pcolormesh(lon_deg.data, 
-                       lat_deg.data, 
-                       data, 
-                       vmin = min_val,
-                       vmax = max_val,
-                       transform=proj[0], 
-                       cmap=plt.get_cmap('jet'))
-    # Scales colorbar to height of plot
-    cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])    
-    cb = plt.colorbar(im, cax=cax)
-    cb.set_label(r'%s [%s]' % (dataset_name, data_units))
-
-    plt.show()
-
-def main(abi_dp_level, abi_dp_name, start_time, end_time, ncdir, *args):
-    file_list = gather_data(abi_dp_level, abi_dp_name, start_time, end_time, ncdir)
-    data_list = goes_data_processor(file_list, *args)
-    
+def data_stats(data_list):    
     i = 0
     for file in data_list: 
         print(np.nanmin(file[0]), np.nanmax(file[0]))
@@ -238,18 +198,3 @@ def main(abi_dp_level, abi_dp_name, start_time, end_time, ncdir, *args):
         i += 1
             
     print(min_val, max_val)
-    for file in data_list:
-        print(file[-2]) # Print timestamps for each file read
-        plot_ncdata(min_val,
-                    max_val, 
-                    *args,
-                    lat_deg = file[1],
-                    lon_deg = file[2], 
-                    data = file[3], 
-                    dataset_name = file[4], 
-                    dataset_long_name = file[5], 
-                    data_units = file[6], 
-                    data_time = file[7],
-                    bound_box = file[8],)
-    
-main(2, 'LSTC', 20202500000000, 20202502359599, r'C:\Users\mrgab\Documents\NOAA-CREST\GOES-16 Data\ncdata', -74, 40.8, 1)

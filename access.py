@@ -1,17 +1,6 @@
 import os
 from datetime import datetime
-import time
 
-def main():
-    gcs_path, gcs_times, local_dir = create_path_dirs()
-    print('GCS Path: ', gcs_path)
-    print('GCS Times: ', gcs_times)
-    print('Path created')
-    start_time = time.time()
-    gcs_data_access(gcs_path, gcs_times, local_dir);
-    print('Data accessed & downloaded')
-    print('Runtime: %s sec' % (time.time() - start_time))
-    
 # Objective: specify GOES-16 data type (L1 or L2) and date to prompt download 
 #            from Google Cloud Storage
 # Input: user prompts for desired data product and date
@@ -19,6 +8,9 @@ def main():
 # Note: GOES only uploads L2 products hourly
 
 def create_path_dirs():
+    
+    ##### BEGIN USER INPUT 
+    
     # Define web path to Google Cloud Repo with GOES-16 data
     g16path = "https://console.cloud.google.com/storage/browser/gcp-public-data-goes-16"
 
@@ -57,7 +49,7 @@ def create_path_dirs():
             continue
     input_dates[1] = date_str.replace('-', '')
     
-    print(input_dates)
+    ##### END USER INPUT
     
     # Generate web path string
     gcs_path = "ABI-" + input_product_level + "-" + input_dataset
@@ -77,7 +69,6 @@ def create_path_dirs():
         i += 1
 
     return gcs_path, gcs_times, g16dir
-
 
 # Objective: specify GOES-16 data type (L1 or L2) and date to prompt download 
 #            Google Cloud Storage
@@ -119,5 +110,3 @@ def gcs_data_access(gcs_path, gcs_times, local_dir):
             # Download the .nc file
             blob.download_to_filename(blob_fn)
             print("File " + blob_fn + " downloaded!")
-
-main()
