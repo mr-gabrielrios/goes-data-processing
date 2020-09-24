@@ -27,7 +27,7 @@ import numpy as np
     # List of complying files (list)      
 # Note: goes-data-storage.py must be run before this
 
-def gather_data(abi_dp_level, abi_dp_name, start_time, end_time, ncdir):
+def gather_data(gcs_times, ncdir):
     
     date_length = 14 # Length of GOES filename time markers
     date_markers = ["_s", "_e"] # Markers for GOES filename start and end dates
@@ -46,7 +46,7 @@ def gather_data(abi_dp_level, abi_dp_name, start_time, end_time, ncdir):
             fet = int(fn[end_idx:end_idx + date_length]) # File end time
             # If the specified start time is before the iterand file start time
             # and greater than the iterand file end time, grab it
-            if start_time <= fst and end_time >= fet:
+            if int(gcs_times[0]) <= fst and int(gcs_times[1]) >= fet:
                 file_list.append(os.path.join(root, fn))
             
     return file_list
