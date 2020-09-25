@@ -1,6 +1,7 @@
 import access
 import plotter
 import data_processing as dp
+import plot_animation as pa
 import numpy as np
 import time
 
@@ -30,18 +31,21 @@ def main(*args):
         i += 1
             
     print(min_val, max_val)
-    for file in data_list:
-        print(file[-2]) # Print timestamps for each file read
-        plotter.plot_ncdata(min_val,
-                    max_val, 
-                    *args,
-                    lat_deg = file[1],
-                    lon_deg = file[2], 
-                    data = file[3], 
-                    dataset_name = file[4], 
-                    dataset_long_name = file[5], 
-                    data_units = file[6], 
-                    data_time = file[7],
-                    bound_box = file[8],)
     
-main(-74, 40.8, 1)
+    pa.animate(data_list, min_val, max_val, *args)
+    
+    # for file in data_list:
+    #     print(file[-2]) # Print timestamps for each file read
+    #     plotter.plot_ncdata(min_val,
+    #                 max_val, 
+    #                 *args,
+    #                 lat_deg = file[1],
+    #                 lon_deg = file[2], 
+    #                 data = file[3], 
+    #                 dataset_name = file[4], 
+    #                 dataset_long_name = file[5], 
+    #                 data_units = file[6], 
+    #                 data_time = file[7],
+    #                 bound_box = file[8])
+    
+main()
