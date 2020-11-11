@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import cartopy
 import cartopy.crs as ccrs
 
 def plot_ncdata(min_val, max_val, *args, **kwargs):
@@ -18,19 +19,23 @@ def plot_ncdata(min_val, max_val, *args, **kwargs):
 
     # Create figure and format it
     fig = plt.figure(figsize=(6, 6), dpi=200)
-    matplotlib.rcParams['font.family'] = ['Arial']
 
     # Define desired projection.
     # GOES-16 default is PlateCarree. Orthographic is chosen as final projection
     proj = [ccrs.PlateCarree(), ccrs.Orthographic(central_lon, central_lat)];
     ax = plt.axes(projection=proj[1])
     ax.set_extent(bound_box)
-    ax.gridlines()
+    gl = ax.gridlines(draw_labels=True, dms=True)
+    gl.xlabels_top = False
+    gl.ylabels_right = False
     ax.coastlines(resolution='10m')
+    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
+    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
 
     ### Figure metadata
     # Figure title
-    plt.title('%s \n %s' % (dataset_long_name, data_time))
+    fontname = "FreeSans" # Change to Arial on Windows, Helvetica on Mac
+    plt.title('%s \n %s UTC' % (dataset_long_name, data_time), fontname=fontname)
     # Figure colormap
     im = ax.pcolormesh(lon_deg.data, 
                        lat_deg.data, 
@@ -42,7 +47,12 @@ def plot_ncdata(min_val, max_val, *args, **kwargs):
     # Scales colorbar to height of plot
     cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])    
     cb = plt.colorbar(im, cax=cax)
-    cb.set_label(r'%s [%s]' % (dataset_name, data_units))
-
+    
+    cb.set_label(r'%s [%s]' % (dataset_name, data_units), fontname=fontname) 
+    gl.xlabel_style = {'fontfamily': fontname}
+    gl.ylabel_style = {'fontfamily': fontname}
+    for label in cb.ax.yaxis.get_ticklabels():
+        label.set_family(fontname)
+    
     plt.show()
     return fig, im
