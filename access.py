@@ -62,8 +62,8 @@ def create_path_dirs(**kwargs):
     # This is the root directory for all locally-stored GOES-16 data
     g16dir = r'ncdata/' + input_dataset + '/'
     isdir = os.path.isdir(g16dir) # Boolean to check if ncdata folder already exists
-    if not isdir: # If it doesn't exist, create it as a subfolder
-        os.mkdir(os.path.join(os.getcwd(), g16dir))
+    if not os.path.exists(g16dir): # If it doesn't exist, create it as a subfolder
+        os.makedirs(os.path.join(os.getcwd(), g16dir))
     
     # Generate web path string
     gcs_path = "ABI-" + input_product_level + "-" + input_dataset
@@ -120,22 +120,25 @@ def gcs_data_access(gcs_path, gcs_times, local_dir):
                 file_times[1] = fet
         i += 1
     
-    # Logic to handle which files to download if one of the dates is beyond the already-downloaded file timestamps
-    dl = False # When True, download files
+    
     gcs_times_dl = [gcs_times[0], gcs_times[1]] # Download timestamp bounds
-    if int(gcs_times[0]) >= file_times[0] and int(gcs_times[1]) <= file_times[1]:
-        print('No download necessary, moving to data processing...')
-    elif int(gcs_times[0]) <= file_times[0] and int(gcs_times[1]) <= file_times[1]: # Earlier date requested
-        gcs_times_dl[1] = str(file_times[0])
-        dl = True
-    elif int(gcs_times[0]) >= file_times[0] and int(gcs_times[1]) >= file_times[1]: # Later date requested
-        gcs_times_dl[0] = str(file_times[1])
-        dl = True
-    elif int(gcs_times[0]) <= file_times[0] and int(gcs_times[1]) >= file_times[1]: # Both earlier and later date requested
-        gcs_times_dl = gcs_times
-        dl = True
-    else:
-        dl = True
+    dl = True # When True, download files
+    if file_times:
+        # Logic to handle which files to download if one of the dates is beyond the already-downloaded file timestamps
+        dl = False # When True, download files
+        if int(gcs_times[0]) >= file_times[0] and int(gcs_times[1]) <= file_times[1]:
+            print('No download necessary, moving to data processing...')
+        elif int(gcs_times[0]) <= file_times[0] and int(gcs_times[1]) <= file_times[1]: # Earlier date requested
+            gcs_times_dl[1] = str(file_times[0])
+            dl = True
+        elif int(gcs_times[0]) >= file_times[0] and int(gcs_times[1]) >= file_times[1]: # Later date requested
+            gcs_times_dl[0] = str(file_times[1])
+            dl = True
+        elif int(gcs_times[0]) <= file_times[0] and int(gcs_times[1]) >= file_times[1]: # Both earlier and later date requested
+            gcs_times_dl = gcs_times
+            dl = True
+        else:
+            dl = True
     
     print('Download times: ', gcs_times_dl)
     dt = datetime.strptime(gcs_times_dl[1][0:-1], '%Y%j%H%M%S') - datetime.strptime(gcs_times_dl[0][0:-1], '%Y%j%H%M%S')
